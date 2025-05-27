@@ -1,158 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monty Hall with 20 Doors</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #111;
-      color: white;
-    }
-    #doors {
-      display: flex;
-      flex-wrap: wrap;
-      max-width: 800px;
-      margin: 20px auto;
-      justify-content: center;
-    }
-    .door {
-      width: 70px;
-      height: 100px;
-      background-color: #555;
-      margin: 5px;
-      border-radius: 5px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: white;
-      font-size: 20px;
-    }
-    .door.selected {
-      background-color: red;
-    }
-    .door.revealed {
-      background-color: #222;
-      cursor: default;
-    }
-    .door.winner {
-      background-color: green;
-    }
-    #controls, #score {
-      margin-top: 20px;
-    }
-    button {
-      margin: 10px;
-      padding: 10px;
-    }
-  </style>
-</head>
-<body>
-  <h1>Monty Hall Problem - 20 Doors</h1>
-  <div id="score">Wins: 0 / Plays: 0</div>
-  <div id="doors"></div>
-  <div id="controls"></div>
-
-  <script>
-    const doorsContainer = document.getElementById("doors");
-    const controls = document.getElementById("controls");
-    const scoreDisplay = document.getElementById("score");
-
-    let doors = [];
-    let selectedDoor = null;
-    let winningDoor = null;
-    let remainingDoor = null;
-    let wins = 0;
-    let plays = 0;
-
-    function setupGame() {
-      doorsContainer.innerHTML = "";
-      controls.innerHTML = "";
-      doors = [];
-      selectedDoor = null;
-      remainingDoor = null;
-      winningDoor = Math.floor(Math.random() * 20);
-
-      for (let i = 0; i < 20; i++) {
-        const door = document.createElement("div");
-        door.classList.add("door");
-        door.textContent = i + 1;
-        door.dataset.index = i;
-        door.addEventListener("click", () => selectDoor(i));
-        doorsContainer.appendChild(door);
-        doors.push(door);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monty Hall with 20 Doors</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background-color: #111;
+        color: white;
       }
-    }
+      #doors {
+        display: flex;
+        flex-wrap: wrap;
+        max-width: 800px;
+        margin: 20px auto;
+        justify-content: center;
+      }
+      .door {
+        width: 70px;
+        height: 100px;
+        background-color: #555;
+        margin: 5px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: white;
+        font-size: 20px;
+      }
+      .door.selected {
+        background-color: red;
+      }
+      .door.revealed {
+        background-color: #222;
+        cursor: default;
+      }
+      .door.winner {
+        background-color: green;
+      }
+      #controls, #score {
+        margin-top: 20px;
+      }
+      button {
+        margin: 10px;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Monty Hall Problem - <span id="door-count-label">10</span> Doors</h1>
+    <label for="door-count">Number of doors: </label>
+    <select id="door-count">
+      <!-- You can adjust the range as desired -->
+      <option value="3">3</option>
+      <option value="5">5</option>
+      <option value="10" selected>10</option>
+      <option value="20">20</option>
+      <option value="50">50</option>
+    </select>
+    <div id="score">Wins: 0 / Plays: 0</div>
+    <div id="doors"></div>
+    <div id="controls"></div>
 
-    function selectDoor(index) {
-      if (selectedDoor !== null) return;
-      selectedDoor = index;
-      doors[selectedDoor].classList.add("selected");
-      revealDoors();
-    }
+    <script>
+      const doorsContainer = document.getElementById("doors");
+      const controls = document.getElementById("controls");
+      const scoreDisplay = document.getElementById("score");
+      const doorCountSelect = document.getElementById("door-count");
+      const doorCountLabel = document.getElementById("door-count-label");
 
-    function revealDoors() {
-      const nonWinningDoors = doors.map((_, i) => i)
-        .filter(i => i !== selectedDoor && i !== winningDoor);
+      let doors = [];
+      let selectedDoor = null;
+      let winningDoor = null;
+      let remainingDoor = null;
+      let wins = 0;
+      let plays = 0;
+      let doorCount = parseInt(doorCountSelect.value);
 
-      // Randomly pick 18 doors to reveal
-      const toReveal = shuffle(nonWinningDoors).slice(0, 18);
-      toReveal.forEach(i => {
-        doors[i].classList.add("revealed");
-        doors[i].removeEventListener("click", () => selectDoor(i));
-        doors[i].textContent = "💨";
+      doorCountSelect.addEventListener("change", () => {
+        doorCount = parseInt(doorCountSelect.value);
+        doorCountLabel.textContent = doorCount;
+        wins = 0;
+        plays = 0;
+        scoreDisplay.textContent = `Wins: ${wins} / Plays: ${plays}`;
+        setupGame();
       });
 
-      // Find the one other door not revealed or selected
-      remainingDoor = doors.findIndex((_, i) => i !== selectedDoor && !toReveal.includes(i));
+      function setupGame() {
+        doorsContainer.innerHTML = "";
+        controls.innerHTML = "";
+        doors = [];
+        selectedDoor = null;
+        remainingDoor = null;
+        winningDoor = Math.floor(Math.random() * doorCount);
 
-      // Show switch option
-      controls.innerHTML = `<p>Do you want to switch your choice to door #${remainingDoor + 1}?</p>
-        <button onclick="finalChoice(true)">Switch</button>
-        <button onclick="finalChoice(false)">Stay</button>`;
-    }
+        for (let i = 0; i < doorCount; i++) {
+          const door = document.createElement("div");
+          door.classList.add("door");
+          door.textContent = i + 1;
+          door.dataset.index = i;
+          door.addEventListener("click", () => selectDoor(i));
+          doorsContainer.appendChild(door);
+          doors.push(door);
+        }
+      }
 
-    function finalChoice(switchChoice) {
-      controls.innerHTML = "";
-      if (switchChoice) {
-        doors[selectedDoor].classList.remove("selected");
-        selectedDoor = remainingDoor;
+      function selectDoor(index) {
+        if (selectedDoor !== null) return;
+        selectedDoor = index;
         doors[selectedDoor].classList.add("selected");
+        revealDoors();
       }
 
-      // Reveal both doors
-      if (selectedDoor === winningDoor) {
-        wins++;
-        doors[selectedDoor].classList.add("winner");
-        doors[selectedDoor].textContent = "$💰$";
-      } else {
-        doors[selectedDoor].textContent = "💨";
-        doors[selectedDoor].classList.add("revealed");
-        doors[winningDoor].classList.add("winner");
-        doors[winningDoor].textContent = "$💰$";
+      function revealDoors() {
+        const nonWinningDoors = doors.map((_, i) => i)
+          .filter(i => i !== selectedDoor && i !== winningDoor);
+
+        // Reveal all but 2 doors (the selected and one other)
+        const toRevealCount = doorCount - 2;
+        const toReveal = shuffle(nonWinningDoors).slice(0, toRevealCount);
+        toReveal.forEach(i => {
+          doors[i].classList.add("revealed");
+          doors[i].removeEventListener("click", () => selectDoor(i));
+          doors[i].textContent = "💨";
+        });
+
+        // Find the one other door not revealed or selected
+        remainingDoor = doors.findIndex((_, i) => i !== selectedDoor && !toReveal.includes(i));
+
+        // Show switch option
+        controls.innerHTML = `<p>Do you want to switch your choice to door #${remainingDoor + 1}?</p>
+          <button onclick="finalChoice(true)">Switch</button>
+          <button onclick="finalChoice(false)">Stay</button>`;
       }
 
-      plays++;
-      scoreDisplay.textContent = `Wins: ${wins} / Plays: ${plays}`;
+      function finalChoice(switchChoice) {
+        controls.innerHTML = "";
+        if (switchChoice) {
+          doors[selectedDoor].classList.remove("selected");
+          selectedDoor = remainingDoor;
+          doors[selectedDoor].classList.add("selected");
+        }
 
-      // Next round button
-      controls.innerHTML += `<br><button onclick="setupGame()">Play Again</button>`;
-    }
+        // Reveal both doors
+        if (selectedDoor === winningDoor) {
+          wins++;
+          doors[selectedDoor].classList.add("winner");
+          doors[selectedDoor].textContent = "$💰$";
+        } else {
+          doors[selectedDoor].textContent = "💨";
+          doors[selectedDoor].classList.add("revealed");
+          doors[winningDoor].classList.add("winner");
+          doors[winningDoor].textContent = "$💰$";
+        }
 
-    function shuffle(array) {
-      let currentIndex = array.length, randomIndex;
-      while (currentIndex !== 0) {
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex--;
-        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        plays++;
+        scoreDisplay.textContent = `Wins: ${wins} / Plays: ${plays}`;
+
+        // Next round button
+        controls.innerHTML += `<br><button onclick="setupGame()">Play Again</button>`;
       }
-      return array;
-    }
 
-    setupGame();
-  </script>
-</body>
+      function shuffle(array) {
+        let currentIndex = array.length, randomIndex;
+        while (currentIndex !== 0) {
+          randomIndex = Math.floor(Math.random() * currentIndex);
+          currentIndex--;
+          [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+        return array;
+      }
+
+      setupGame();
+    </script>
+  </body>
 </html>
